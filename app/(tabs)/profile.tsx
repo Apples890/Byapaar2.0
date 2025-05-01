@@ -6,13 +6,14 @@ import {
   ScrollView, 
   TouchableOpacity, 
   Alert,
+  Image,
 } from 'react-native';
 import { useAuthStore } from '@/store/authStore';
 import { useAuditStore } from '@/store/auditStore';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
 import Colors from '@/constants/Colors';
-import { LogOut, User, Shield, Clock, Settings } from 'lucide-react-native';
+import { LogOut, Shield, Clock, Settings, Camera, Edit } from 'lucide-react-native';
 import { router } from 'expo-router';
 
 export default function ProfileScreen() {
@@ -36,7 +37,7 @@ export default function ProfileScreen() {
           onPress: () => {
             logout();
             // Redirect to the login screen
-            router.replace('./(tabs)/index');
+            router.replace('/');
           }
         },
       ]
@@ -55,7 +56,13 @@ export default function ProfileScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
         <View style={styles.avatarContainer}>
-          <User size={60} color={Colors.primary} />
+          <Image
+            source={{ uri: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80' }}
+            style={styles.avatar}
+          />
+          <TouchableOpacity style={styles.editAvatarButton}>
+            <Camera size={16} color="#fff" />
+          </TouchableOpacity>
         </View>
         <Text style={styles.name}>{currentUser.name}</Text>
         <View style={styles.roleContainer}>
@@ -63,6 +70,11 @@ export default function ProfileScreen() {
           <Text style={styles.role}>{currentUser.role.toUpperCase()}</Text>
         </View>
         <Text style={styles.email}>{currentUser.email}</Text>
+        
+        <TouchableOpacity style={styles.editProfileButton}>
+          <Edit size={16} color={Colors.primary} />
+          <Text style={styles.editProfileText}>Edit Profile</Text>
+        </TouchableOpacity>
       </View>
       
       <Card style={styles.infoCard}>
@@ -149,13 +161,26 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   avatarContainer: {
+    position: 'relative',
+    marginBottom: 16,
+  },
+  avatar: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+  },
+  editAvatarButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: Colors.primary,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: Colors.background,
   },
   name: {
     fontSize: 24,
@@ -181,6 +206,22 @@ const styles = StyleSheet.create({
   email: {
     fontSize: 14,
     color: Colors.textSecondary,
+    marginBottom: 12,
+  },
+  editProfileButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    borderRadius: 16,
+    marginTop: 8,
+  },
+  editProfileText: {
+    fontSize: 14,
+    color: Colors.primary,
+    marginLeft: 6,
   },
   infoCard: {
     marginBottom: 24,
