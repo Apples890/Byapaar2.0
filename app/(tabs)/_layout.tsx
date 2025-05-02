@@ -1,12 +1,13 @@
 import React from "react";
-import { Tabs } from "expo-router";
+import { router, Stack, Tabs } from "expo-router";
 import { Platform, TouchableOpacity } from "react-native";
 import { Home, Package, Users, FileText, BarChart3, User } from "lucide-react-native";
 import Colors from "@/constants/Colors";
 
 export default function TabLayout() {
   return (
-    <Tabs
+          <>
+          <Stack.Screen options={{ headerShown: false }} /><Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.textSecondary,
@@ -27,6 +28,13 @@ export default function TabLayout() {
           fontSize: 12,
           marginBottom: Platform.OS === 'ios' ? 0 : 5,
         },
+        headerRight: () => (
+          <TouchableOpacity 
+            onPress={() => router.push('/profile')}
+            style={{ marginRight: 16 }}
+          >
+            <User size={24} color={Colors.primary} />
+          </TouchableOpacity>),
       }}
     >
       <Tabs.Screen
@@ -34,43 +42,31 @@ export default function TabLayout() {
         options={{
           title: "Dashboard",
           tabBarIcon: ({ color }) => <Home size={24} color={color} />,
-        }}
-      />
+        }} />
       <Tabs.Screen
         name="inventory"
         options={{
           title: "Inventory",
           tabBarIcon: ({ color }) => <Package size={24} color={color} />,
-        }}
-      />
+        }} />
       <Tabs.Screen
         name="customers"
         options={{
           title: "Customers",
           tabBarIcon: ({ color }) => <Users size={24} color={color} />,
-        }}
-      />
+        }} />
       <Tabs.Screen
         name="transactions"
         options={{
           title: "Transactions",
           tabBarIcon: ({ color }) => <FileText size={24} color={color} />,
-        }}
-      />
+        }} />
       <Tabs.Screen
         name="budget"
         options={{
           title: "Budget",
           tabBarIcon: ({ color }) => <BarChart3 size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ color }) => <User size={24} color={color} />,
-        }}
-      />
-    </Tabs>
+        }} />
+    </Tabs></>
   );
 }

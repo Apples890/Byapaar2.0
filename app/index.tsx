@@ -1,17 +1,47 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, Image, Modal } from 'react-native';
-import { Redirect } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View, Text, Image, KeyboardAvoidingView, Platform, TouchableOpacity, ScrollView } from 'react-native';
+import { Redirect, router } from 'expo-router';
 import { useAuthStore } from '@/store/authStore';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 import Colors from '@/constants/Colors';
+import * as SplashScreen from 'expo-splash-screen';
+import { Eye, EyeOff } from 'lucide-react-native';
+
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
 
 export default function LoginScreen() {
   const { login, isAuthenticated } = useAuthStore();
-  const [modalVisible, setModalVisible] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [appIsReady, setAppIsReady] = useState(false);
+  
+  // Simulate a loading delay for the splash screen
+  useEffect(() => {
+    async function prepare() {
+      try {
+        // Simulate a resource loading delay
+        await new Promise(resolve => setTimeout(resolve, 2500));
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        // Tell the application to render
+        setAppIsReady(true);
+      }
+    }
+
+    prepare();
+  }, []);
+
+  // Hide splash screen once our app is ready
+  useEffect(() => {
+    if (appIsReady) {
+      SplashScreen.hideAsync();
+    }
+  }, [appIsReady]);
   
   const handleLogin = async () => {
     if (!email) {
@@ -20,7 +50,12 @@ export default function LoginScreen() {
     
     setLoading(true);
     try {
-      await login(email, password);
+      const success = await login(email, password);
+      if (success) {
+        router.replace('/(tabs)');
+      } else {
+        alert('Invalid credentials. For demo, use admin@example.com');
+      }
     } catch (error) {
       console.error('Login error:', error);
     } finally {
@@ -28,82 +63,124 @@ export default function LoginScreen() {
     }
   };
   
+  const navigateToRegister = () => {
+    router.push('/register');
+  };
+  
+  const navigateToForgotPassword = () => {
+    router.push('/forgot-password');
+  };
+  
   if (isAuthenticated) {
     return <Redirect href="/(tabs)" />;
   }
   
+  if (!appIsReady) {
+    return null; // Still showing splash screen
+  }
+  
   return (
-    <View style={styles.container}>
-      <View style={styles.logoContainer}>
-        <Image
-          source={{ uri: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2426&auto=format&fit=crop' }}
-          style={styles.logo}
-        />
-      </View>
-      
-      <Text style={styles.title}>Inventory & Budget Tracker</Text>
-      <Text style={styles.subtitle}>Manage your inventory, transactions, and budgets in one place</Text>
-      
-      <View style={styles.buttonContainer}>
-        <Button
-          title="Login"
-          onPress={() => setModalVisible(true)}
-          style={styles.button}
-          fullWidth
-        />
-      </View>
-      
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setModalVisible(false)}
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 0}
+    >
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Login</Text>
-            
-            <Input
-              label="Email"
-              placeholder="Enter your email"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-            
+        <View style={styles.logoContainer}>
+          <Image
+            source={require("@/assets/images/Icon-1.png")}
+            style={styles.logo}
+          />
+        </View>
+        
+        {/* <Text style={styles.title }>Byapaar</Text> */}
+        <Text style={styles.subtitle}>From Street Deals to Business Empires</Text>
+        
+        <View style={styles.formContainer}>
+          <Input
+            label="Email"
+            placeholder="Enter your email"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            containerStyle={styles.inputContainer}
+          />
+          
+          <View style={styles.passwordContainer}>
             <Input
               label="Password"
               placeholder="Enter your password"
               value={password}
               onChangeText={setPassword}
-              secureTextEntry
+              secureTextEntry={!showPassword}
+              containerStyle={styles.passwordInput}
             />
-            
-            <Text style={styles.helpText}>
-              For demo: use admin@example.com or employee@example.com
-            </Text>
-            
-            <View style={styles.modalActions}>
-              <Button
-                title="Cancel"
-                onPress={() => setModalVisible(false)}
-                variant="outline"
-                style={styles.modalButton}
-              />
-              <Button
-                title="Login"
-                onPress={handleLogin}
-                style={styles.modalButton}
-                loading={loading}
-              />
-            </View>
+            <TouchableOpacity 
+              style={styles.eyeIcon}
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? (
+                <EyeOff size={20} color={Colors.textSecondary} />
+              ) : (
+                <Eye size={20} color={Colors.textSecondary} />
+              )}
+            </TouchableOpacity>
+          </View>
+          
+          <TouchableOpacity 
+            onPress={navigateToForgotPassword}
+            style={styles.forgotPasswordLink}
+          >
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          </TouchableOpacity>
+          
+          <Button
+            title="Login"
+            onPress={handleLogin}
+            loading={loading}
+            style={styles.loginButton}
+            fullWidth
+          />
+          
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>OR</Text>
+            <View style={styles.dividerLine} />
+          </View>
+          
+          <Button
+            title="Continue with Google"
+            onPress={() => alert("Google login not implemented in demo")}
+            variant="outline"
+            style={styles.socialButton}
+            fullWidth
+          />
+          
+          <Button
+            title="Continue with Apple"
+            onPress={() => alert("Apple login not implemented in demo")}
+            variant="outline"
+            style={styles.socialButton}
+            fullWidth
+          />
+          
+          <View style={styles.registerContainer}>
+            <Text style={styles.registerText}>Don't have an account? </Text>
+            <TouchableOpacity onPress={navigateToRegister}>
+              <Text style={styles.registerLink}>Sign up</Text>
+            </TouchableOpacity>
           </View>
         </View>
-      </Modal>
-      
-      <Text style={styles.footer}>Version 1.0.0</Text>
-    </View>
+        
+        <Text style={styles.helpText}>
+          For demo: use admin@example.com or employee@example.com
+        </Text>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -111,6 +188,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
     padding: 24,
     justifyContent: 'center',
   },
@@ -119,74 +199,90 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   logo: {
-    width: 120,
-    height: 120,
-    borderRadius: 20,
+    width: 165,
+    height: 125,
+    borderRadius: 0,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.text,
+    fontSize: 34,
+    fontWeight: 700,
+    color: Colors.primary,
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
+    textTransform: 'uppercase',
   },
   subtitle: {
     fontSize: 16,
     color: Colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 48,
+    marginBottom: 32,
   },
-  buttonContainer: {
+  formContainer: {
     width: '100%',
-    gap: 16,
   },
-  button: {
+  inputContainer: {
     marginBottom: 16,
   },
-  footer: {
+  passwordContainer: {
+    position: 'relative',
+  },
+  passwordInput: {
+    marginBottom: 8,
+  },
+  eyeIcon: {
     position: 'absolute',
-    bottom: 24,
-    alignSelf: 'center',
-    fontSize: 12,
-    color: Colors.textSecondary,
+    right: 12,
+    top: 38,
+    padding: 4,
   },
-  modalContainer: {
+  forgotPasswordLink: {
+    alignSelf: 'flex-end',
+    marginBottom: 24,
+  },
+  forgotPasswordText: {
+    color: Colors.primary,
+    fontSize: 14,
+  },
+  loginButton: {
+    marginBottom: 24,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  dividerLine: {
     flex: 1,
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    height: 1,
+    backgroundColor: Colors.border,
   },
-  modalContent: {
-    backgroundColor: Colors.background,
-    borderRadius: 12,
-    margin: 20,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+  dividerText: {
+    color: Colors.textSecondary,
+    paddingHorizontal: 16,
+    fontSize: 14,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.text,
+  socialButton: {
     marginBottom: 16,
-    textAlign: 'center',
+  },
+  registerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 16,
+  },
+  registerText: {
+    color: Colors.textSecondary,
+    fontSize: 14,
+  },
+  registerLink: {
+    color: Colors.primary,
+    fontSize: 14,
+    fontWeight: '600',
   },
   helpText: {
     fontSize: 12,
     color: Colors.textSecondary,
-    marginTop: 8,
-    marginBottom: 16,
+    marginTop: 24,
     textAlign: 'center',
     fontStyle: 'italic',
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 16,
-  },
-  modalButton: {
-    flex: 0.48,
   },
 });
